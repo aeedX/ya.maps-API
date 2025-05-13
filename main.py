@@ -11,7 +11,8 @@ def main():
     screen = pygame.display.set_mode(size)
     font = pygame.font.SysFont(None, 36)
 
-    theme_btn = font.render('SWITCH THEME', True, (255, 255, 255))
+    theme_btn = font.render('theme', True, (255, 255, 255))
+    reset_btn = font.render('reset', True, (255, 255, 255))
 
     txt = ''
     active = False
@@ -64,10 +65,14 @@ def main():
                     ll[0] += moving_delta
                     update_map(ll, z, theme, pt)
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.pos[0] < 200 and event.pos[1] > 450:
+                if event.pos[0] < 75 and event.pos[1] > 450:
                     theme = (theme + 1) % 2
                     update_map(ll, z, theme, pt)
+                if 100 < event.pos[0] < 160 and event.pos[1] > 450:
+                    pt = ''
+                    update_map(ll, z, theme, pt)
         screen.blit(theme_btn, (0, 462))
+        screen.blit(reset_btn, (100, 462))
         screen.blit(font.render(txt, True, (255, 255, 255)), (400, 462))
         screen.blit(pygame.image.load('map.png'), (0, 0))
         pygame.display.flip()
