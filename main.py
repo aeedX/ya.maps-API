@@ -81,11 +81,11 @@ def main():
                     params['pt'] = ''
                     address = ''
                     update_map(params)
-                # if 150 < event.pos[0] < 210 and event.pos[1] > 450:
-                #     index = not index
+                if 150 < event.pos[0] < 210 and event.pos[1] > 450:
+                    index = not index
         screen.blit(theme_btn, (0, 462))
         screen.blit(reset_btn, (80, 462))
-        #screen.blit(index_btn, (150, 462))
+        screen.blit(index_btn, (150, 462))
         screen.blit(font2.render(txt, True, (255, 255, 255)), (240, 462))
         if address:
             screen.blit(font2.render(f'{address["formatted"]}{f", {address['postal_code']}" if index else ""}', True, (255, 255, 255)), (0, 500))
