@@ -7,20 +7,27 @@ def main():
 
     pygame.init()
     pygame.display.set_caption('ya.maps')
-    size = width, height = 600, 500
+    size = width, height = 600, 535
     screen = pygame.display.set_mode(size)
-    font = pygame.font.SysFont(None, 36)
+    font = pygame.font.SysFont(None, 32)
+    font2 = pygame.font.SysFont(None, 26)
 
     theme_btn = font.render('theme', True, (255, 255, 255))
     reset_btn = font.render('reset', True, (255, 255, 255))
+    index_btn = font.render('index', True, (255, 255, 255))
 
     txt = ''
     active = False
+    address = ''
+    index = False
 
-    theme = 0
-    pt = ''
-    z = 10
-    update_map(ll, z, theme, pt)
+    params = {
+        'll': ll,
+        'theme': 0,
+        'pt': '',
+        'z': 10
+    }
+    update_map(params)
 
 
     running = True
@@ -32,9 +39,11 @@ def main():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
                     if active:
-                        ll = search(txt)
-                        pt = ll.copy()
-                        update_map(ll, z, theme, pt)
+                        res = search(txt)
+                        if res:
+                            params['ll'], address = res
+                            params['pt'] = params['ll'].copy()
+                            update_map(params)
                     else:
                         txt = ''
                     active = not active
@@ -45,51 +54,62 @@ def main():
                         else:
                             txt += event.unicode
                         break
-                if event.key == pygame.K_PAGEUP and z < 21:
-                    z += 1
-                    update_map(ll, z, theme, pt)
-                if event.key == pygame.K_PAGEDOWN and z > 0:
-                    z -= 1
-                    update_map(ll, z, theme, pt)
-                moving_delta = 163.84 / 2 ** z
-                if event.key == pygame.K_w and ll[1] + moving_delta < 85.05112878:
-                    ll[1] += moving_delta
-                    update_map(ll, z, theme, pt)
-                if event.key == pygame.K_a and ll[0] - moving_delta > -180:
-                    ll[0] -= moving_delta
-                    update_map(ll, z, theme, pt)
-                if event.key == pygame.K_s and ll[1] - moving_delta > -85.05112878:
-                    ll[1] -= moving_delta
-                    update_map(ll, z, theme, pt)
-                if event.key == pygame.K_d and ll[0] + moving_delta < 180:
-                    ll[0] += moving_delta
-                    update_map(ll, z, theme, pt)
+                if event.key == pygame.K_PAGEUP and params['z'] < 21:
+                    params['z'] += 1
+                    update_map(params)
+                if event.key == pygame.K_PAGEDOWN and params['z'] > 0:
+                    params['z'] -= 1
+                    update_map(params)
+                moving_delta = 163.84 / 2 ** params['z']
+                if event.key == pygame.K_w and params['ll'][1] + moving_delta < 85.05112878:
+                    params['ll'][1] += moving_delta
+                    update_map(params)
+                if event.key == pygame.K_a and params['ll'][0] - moving_delta > -180:
+                    params['ll'][0] -= moving_delta
+                    update_map(params)
+                if event.key == pygame.K_s and params['ll'][1] - moving_delta > -85.05112878:
+                    params['ll'][1] -= moving_delta
+                    update_map(params)
+                if event.key == pygame.K_d and params['ll'][0] + moving_delta < 180:
+                    params['ll'][0] += moving_delta
+                    update_map(params)
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.pos[0] < 75 and event.pos[1] > 450:
-                    theme = (theme + 1) % 2
-                    update_map(ll, z, theme, pt)
-                if 100 < event.pos[0] < 160 and event.pos[1] > 450:
-                    pt = ''
-                    update_map(ll, z, theme, pt)
+                    params['theme'] = (params['theme'] + 1) % 2
+                    update_map(params)
+                if 80 < event.pos[0] < 140 and event.pos[1] > 450:
+                    params['pt'] = ''
+                    address = ''
+                    update_map(params)
+                # if 150 < event.pos[0] < 210 and event.pos[1] > 450:
+                #     index = not index
         screen.blit(theme_btn, (0, 462))
-        screen.blit(reset_btn, (100, 462))
-        screen.blit(font.render(txt, True, (255, 255, 255)), (400, 462))
+        screen.blit(reset_btn, (80, 462))
+        #screen.blit(index_btn, (150, 462))
+        screen.blit(font2.render(txt, True, (255, 255, 255)), (240, 462))
+        if address:
+            screen.blit(font2.render(f'{address["formatted"]}{f", {address['postal_code']}" if index else ""}', True, (255, 255, 255)), (0, 500))
         screen.blit(pygame.image.load('map.png'), (0, 0))
         pygame.display.flip()
 
 
-def update_map(ll, z, theme, pt):
-    ll = ','.join(map(str, ll))
-    response = requests.get(f'https://static-maps.yandex.ru/v1?ll={ll}&z={z}&theme={"dark" if theme else "light"}'
-                            f'{f"&pt={','.join(map(str, pt))}" if pt else ""}&apikey=f3a0fe3a-b07e-4840-a1da-06f18b2ddf13')
+def update_map(p):
+    ll = ','.join(map(str, p['ll']))
+    response = requests.get(f'https://static-maps.yandex.ru/v1?ll={ll}&z={p["z"]}&theme={"dark" if p["theme"] else "light"}'
+                            f'{f"&pt={','.join(map(str, p["pt"]))}" if p["pt"] else ""}&'
+                            f'apikey=f3a0fe3a-b07e-4840-a1da-06f18b2ddf13')
     with open('map.png', 'wb') as f:
         f.write(response.content)
 
 
 def search(txt):
-    return list(map(float, requests.get(f'http://geocode-maps.yandex.ru/1.x?geocode={txt}&format=json&'
-                                       f'apikey=8013b162-6b42-4997-9691-77b7074026e0').json()["response"][
-        "GeoObjectCollection"]["featureMember"][0]["GeoObject"]['Point']['pos'].split()))
+    response =  requests.get(f'http://geocode-maps.yandex.ru/1.x?geocode={txt}&format=json&'
+                                             f'apikey=8013b162-6b42-4997-9691-77b7074026e0').json()["response"][
+        "GeoObjectCollection"]["featureMember"]
+    if response:
+        response = response[0]["GeoObject"]
+        return list(map(float, response['Point']['pos'].split())), response['metaDataProperty']['GeocoderMetaData']['Address']
+    return None
 
 
 if __name__ == '__main__':
