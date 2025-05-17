@@ -24,11 +24,11 @@ def main():
     params = {
         'll': ll,
         'theme': 0,
-        'pt': ll,
+        'pt': '',
         'z': 10
     }
     update_map(params)
-
+    rmb = False
 
     running = True
     while running:
@@ -39,7 +39,7 @@ def main():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
                     if active:
-                        res = search(txt)
+                        res = search_org(ll, txt) if rmb else search(txt); rmb = False
                         if res:
                             params['ll'], address = res
                             params['pt'] = params['ll'].copy()
@@ -89,9 +89,14 @@ def main():
                                         params['ll'][1] - (event.pos[1] - 450 / 2) * 0.00083 * 2 ** 10 / 2 ** params['z']]
                         res = search(','.join(map(str, params['ll'])))
                         if res:
-                            params['pt'] = params['ll'].copy()
                             params['ll'], address = res
+                            params['pt'] = params['ll'].copy()
                             update_map(params)
+                elif event.button == 3:
+                    params['ll'] = [params['ll'][0] + (event.pos[0] - 600 / 2) * 0.00136 * 2 ** 10 / 2 ** params['z'],
+                                    params['ll'][1] - (event.pos[1] - 450 / 2) * 0.00083 * 2 ** 10 / 2 ** params['z']]
+                    update_map(params)
+                    rmb = True
         screen.blit(theme_btn, (0, 462))
         screen.blit(reset_btn, (80, 462))
         screen.blit(index_btn, (150, 462))
@@ -113,12 +118,20 @@ def update_map(p):
 
 def search(txt):
     response =  requests.get(f'http://geocode-maps.yandex.ru/1.x?geocode={txt}&format=json&'
-                                             f'apikey=8013b162-6b42-4997-9691-77b7074026e0').json()["response"][
-        "GeoObjectCollection"]["featureMember"]
+                                             f'apikey=8013b162-6b42-4997-9691-77b7074026e0').json()
     if response:
-        response = response[0]["GeoObject"]
+        print(txt)
+        response = response["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]
         return list(map(float, response['Point']['pos'].split())), response['metaDataProperty']['GeocoderMetaData']['Address']
     return None
+
+
+def search_org(ll, txt):
+    response =  requests.get(f'https://search-maps.yandex.ru/v1?ll={','.join(map(str, ll))}&text={txt}&results=1&format=json&'
+                                             f'lang=ru&apikey=dda3ddba-c9ea-4ead-9010-f43fbc15c6e3').json()["features"]
+    if response:
+        response = response[0]["geometry"]['coordinates']
+        return search(','.join(map(str, response)))
 
 
 if __name__ == '__main__':
