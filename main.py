@@ -24,7 +24,7 @@ def main():
     params = {
         'll': ll,
         'theme': 0,
-        'pt': '',
+        'pt': ll,
         'z': 10
     }
     update_map(params)
@@ -74,15 +74,24 @@ def main():
                     params['ll'][0] += moving_delta
                     update_map(params)
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.pos[0] < 75 and event.pos[1] > 450:
-                    params['theme'] = (params['theme'] + 1) % 2
-                    update_map(params)
-                if 80 < event.pos[0] < 140 and event.pos[1] > 450:
-                    params['pt'] = ''
-                    address = ''
-                    update_map(params)
-                if 150 < event.pos[0] < 210 and event.pos[1] > 450:
-                    index = not index
+                if event.button == 1:
+                    if event.pos[0] < 75 and event.pos[1] > 450:
+                        params['theme'] = (params['theme'] + 1) % 2
+                        update_map(params)
+                    elif 80 < event.pos[0] < 140 and event.pos[1] > 450:
+                        params['pt'] = ''
+                        address = ''
+                        update_map(params)
+                    elif 150 < event.pos[0] < 210 and event.pos[1] > 450:
+                        index = not index
+                    else:
+                        params['ll'] = [params['ll'][0] + (event.pos[0] - 600 / 2) * 0.00136 * 2 ** 10 / 2 ** params['z'],
+                                        params['ll'][1] - (event.pos[1] - 450 / 2) * 0.00083 * 2 ** 10 / 2 ** params['z']]
+                        res = search(','.join(map(str, params['ll'])))
+                        if res:
+                            params['pt'] = params['ll'].copy()
+                            params['ll'], address = res
+                            update_map(params)
         screen.blit(theme_btn, (0, 462))
         screen.blit(reset_btn, (80, 462))
         screen.blit(index_btn, (150, 462))
